@@ -7,11 +7,13 @@ import os
 import math
 import shutil
 import datetime
+import tempfile
 from typing import Dict, List, Tuple
 from colorama import Fore, Style, Back, init
 from rich.console import Console
 from rich.table import Table
 from jinja2 import Environment, FileSystemLoader
+import pdfkit
 
 from languages import LANGUAGES
 
@@ -302,3 +304,81 @@ class Reporter:
             f.write(html_content)
 
         print(f"HTML report exported to {output_path}")
+
+    def to_pdf(self, output_path: str) -> None:
+        """
+        Export the results to a PDF file with charts.
+
+        Args:
+            output_path: Path to the output file
+        """
+        # First generate HTML content
+        env = Environment(loader=FileSystemLoader('templates'))
+        template = env.get_template('report_template.html')
+
+        # Sort languages by code lines (descending)
+        sorted_languages = sorted(
+            [lang for lang in self.results.keys() if lang not in ('_meta', 'Total')],
+            key=lambda lang: self.results[lang]['code'],
+            reverse=True
+        )
+
+        # Prepare data for the template
+        languages_data = {}
+        for language in sorted_languages:
+            if language == '_meta':
+                continue
+            languages_data[language] = self.results[language]
+
+        # Get version from utils
+        from utils import get_version
+
+        # Render the template
+        html_content = template.render(
+            languages=languages_data,
+            total=self.results.get('Total', {}),
+            meta=self.meta,
+            version=get_version(),
+            date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        # Create a temporary HTML file
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as temp_html:
+            temp_html_path = temp_html.name
+            temp_html.write(html_content)
+
+        try:
+            # Convert HTML to PDF using pdfkit
+            options = {
+                'quiet': '',
+                'page-size': 'A4',
+                'margin-top': '0.75in',
+                'margin-right': '0.75in',
+                'margin-bottom': '0.75in',
+                'margin-left': '0.75in',
+                'encoding': 'UTF-8',
+                'no-outline': None,
+                'enable-local-file-access': None
+            }
+
+            try:
+                # Try to convert HTML to PDF
+                pdfkit.from_file(temp_html_path, output_path, options=options)
+                print(f"PDF report exported to {output_path}")
+            except OSError as e:
+                # If wkhtmltopdf is not installed, inform the user
+                print(f"Error generating PDF: {e}")
+                print("To generate PDF reports, you need to install wkhtmltopdf:")
+                print("1. Download from: https://wkhtmltopdf.org/downloads.html")
+                print("2. Add the installation directory to your PATH")
+                print("3. Try again")
+
+                # Save HTML as fallback
+                html_fallback_path = output_path.replace('.pdf', '.html')
+                with open(html_fallback_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                print(f"HTML report saved as fallback to {html_fallback_path}")
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_html_path):
+                os.unlink(temp_html_path)
