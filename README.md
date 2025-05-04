@@ -13,6 +13,10 @@ A fast, cross-platform, and portable tool for counting lines of code in software
 - **Multiple Report Formats**: Export results in JSON and Markdown formats
 - **Beautiful CLI**: Attractive and intuitive command-line interface
 
+## Demo HTML Report
+![AuraX Code Analysis Report](https://github.com/user-attachments/assets/c9390650-3495-4ba7-8d67-13c556c20d0e)
+
+
 ## Installation
 
 ```bash
