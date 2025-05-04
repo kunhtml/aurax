@@ -43,7 +43,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         '--format',
         type=str,
-        choices=['console', 'json', 'md'],
+        choices=['console', 'json', 'md', 'html'],
         default='console',
         help='Output format'
     )
