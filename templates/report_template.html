@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraX Code Analysis Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e9f7fe;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e9f7fe;
+        }
+        .summary-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .summary-item {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 200px;
+        }
+        .code { color: #27ae60; }
+        .comment { color: #f39c12; }
+        .blank { color: #9b59b6; }
+        .meta { color: #3498db; }
+        .chart-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .chart {
+            width: 48%;
+            height: 400px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>AuraX Code Analysis Report</h1>
+        
+        <div class="summary-box">
+            <h2>Summary</h2>
+            <div class="summary-item">
+                <span class="label">Total Files:</span> 
+                <span>{{ total.files }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total Lines of Code:</span> 
+                <span class="code">{{ total.code }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total Comment Lines:</span> 
+                <span class="comment">{{ total.comment }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total Blank Lines:</span> 
+                <span class="blank">{{ total.blank }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total Lines:</span> 
+                <span>{{ total.total }}</span>
+            </div>
+        </div>
+
+        <h2>Performance</h2>
+        <div class="summary-box">
+            <div class="summary-item">
+                <span class="label">Processing Time:</span> 
+                <span class="meta">{{ meta.elapsed_time|round(2) }} seconds</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Files per Second:</span> 
+                <span class="meta">{{ meta.files_per_second|round(2) }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Lines per Second:</span> 
+                <span class="meta">{{ meta.lines_per_second|round(2) }}</span>
+            </div>
+        </div>
+
+        <h2>Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Language</th>
+                    <th>Files</th>
+                    <th>Code</th>
+                    <th>Comment</th>
+                    <th>Blank</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for language, data in languages.items() %}
+                <tr>
+                    <td>{{ language }}</td>
+                    <td>{{ data.files }}</td>
+                    <td class="code">{{ data.code }}</td>
+                    <td class="comment">{{ data.comment if language not in ['JSON', 'Markdown', 'Jinja2 Template'] else 'N/A' }}</td>
+                    <td class="blank">{{ data.blank }}</td>
+                    <td>{{ data.total }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td>Total</td>
+                    <td>{{ total.files }}</td>
+                    <td class="code">{{ total.code }}</td>
+                    <td class="comment">{{ total.comment }}</td>
+                    <td class="blank">{{ total.blank }}</td>
+                    <td>{{ total.total }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="chart-container">
+            <div class="chart">
+                <canvas id="languageDistribution"></canvas>
+            </div>
+            <div class="chart">
+                <canvas id="lineTypeDistribution"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Generated by AuraX v{{ version }} on {{ date }}</p>
+    </footer>
+
+    <script>
+        // Language distribution chart
+        const languageCtx = document.getElementById('languageDistribution').getContext('2d');
+        const languageChart = new Chart(languageCtx, {
+            type: 'pie',
+            data: {
+                labels: [{% for language in languages.keys() %}'{{ language }}',{% endfor %}],
+                datasets: [{
+                    label: 'Lines of Code',
+                    data: [{% for language, data in languages.items() %}{{ data.code }},{% endfor %}],
+                    backgroundColor: [
+                        '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
+                        '#1abc9c', '#d35400', '#34495e', '#16a085', '#27ae60',
+                        '#2980b9', '#8e44ad', '#f1c40f', '#e67e22', '#c0392b'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Code Distribution by Language'
+                    }
+                }
+            }
+        });
+
+        // Line type distribution chart
+        const lineTypeCtx = document.getElementById('lineTypeDistribution').getContext('2d');
+        const lineTypeChart = new Chart(lineTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Code', 'Comment', 'Blank'],
+                datasets: [{
+                    label: 'Line Types',
+                    data: [{{ total.code }}, {{ total.comment }}, {{ total.blank }}],
+                    backgroundColor: [
+                        '#27ae60', '#f39c12', '#9b59b6'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribution by Line Type'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
