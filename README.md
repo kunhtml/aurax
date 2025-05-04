@@ -49,6 +49,15 @@ python main.py /path/to/project --format md --output results.md
 # Exclude specific directories
 python main.py /path/to/project --exclude node_modules,dist,build
 
+### HTML with Interactive Charts
+
+Create a beautiful HTML report with interactive charts for visualizing your codebase:
+
+```bash
+python main.py /path/to/project --format html --output results.html
+```
+
+
 # Update the tool
 python main.py --update
 ```
