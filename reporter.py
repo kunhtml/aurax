@@ -6,10 +6,12 @@ import json
 import os
 import math
 import shutil
+import datetime
 from typing import Dict, List, Tuple
 from colorama import Fore, Style, Back, init
 from rich.console import Console
 from rich.table import Table
+from jinja2 import Environment, FileSystemLoader
 
 from languages import LANGUAGES
 
@@ -257,3 +259,46 @@ class Reporter:
                 f.write(f"| **Total** | **{total_data['files']}** | **{total_data['code']}** | **{total_data['comment']}** | **{total_data['blank']}** | **{total_data['total']}** |\n")
 
         print(f"Results exported to {output_path}")
+
+    def to_html(self, output_path: str) -> None:
+        """
+        Export the results to an HTML file with charts.
+
+        Args:
+            output_path: Path to the output file
+        """
+        # Set up Jinja2 environment
+        env = Environment(loader=FileSystemLoader('templates'))
+        template = env.get_template('report_template.html')
+
+        # Sort languages by code lines (descending)
+        sorted_languages = sorted(
+            [lang for lang in self.results.keys() if lang not in ('_meta', 'Total')],
+            key=lambda lang: self.results[lang]['code'],
+            reverse=True
+        )
+
+        # Prepare data for the template
+        languages_data = {}
+        for language in sorted_languages:
+            if language == '_meta':
+                continue
+            languages_data[language] = self.results[language]
+
+        # Get version from utils
+        from utils import get_version
+
+        # Render the template
+        html_content = template.render(
+            languages=languages_data,
+            total=self.results.get('Total', {}),
+            meta=self.meta,
+            version=get_version(),
+            date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        # Write to file
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+
+        print(f"HTML report exported to {output_path}")
