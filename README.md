@@ -17,7 +17,7 @@ A fast, cross-platform, and portable tool for counting lines of code in software
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/aurax.git
+git clone https://github.com/kunhtml/aurax.git
 cd aurax
 
 # Install dependencies
