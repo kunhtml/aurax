@@ -117,6 +117,7 @@ class Reporter:
 
         # Add columns
         table.add_column("Language", style="cyan", justify="left")
+        table.add_column("Files", style="white", justify="right")
         table.add_column("Code", style="green", justify="right")
         table.add_column("Comment", style="yellow", justify="right")
         table.add_column("Blank", style="magenta", justify="right")
@@ -152,6 +153,7 @@ class Reporter:
             # Add row to table
             table.add_row(
                 language,
+                str(data['files']),
                 str(data['code']),
                 comment_str,
                 str(data['blank']),
@@ -163,6 +165,7 @@ class Reporter:
             total_data = self.results['Total']
             table.add_row(
                 "[bold]Total[/bold]",
+                f"[bold white]{total_data['files']}[/bold white]",
                 f"[bold green]{total_data['code']}[/bold green]",
                 f"[bold yellow]{total_data['comment']}[/bold yellow]",
                 f"[bold magenta]{total_data['blank']}[/bold magenta]",
@@ -170,18 +173,18 @@ class Reporter:
             )
 
             # Add empty row as separator
-            table.add_row("", "", "", "", "")
+            table.add_row("", "", "", "", "", "")
 
             # Add summary information
             project_size = total_data['total'] * 100 / 1024 / 1024
             language_count = len(sorted_languages)
 
-            table.add_row("[bold cyan]Summary Information[/bold cyan]", "", "", "", "")
-            table.add_row("[white][+] [green]Code[/green][/white]", f"[green]{total_data['code']:,} lines[/green]", "", "", "")
-            table.add_row("[white][+] [yellow]Comments[/yellow][/white]", f"[yellow]{total_data['comment']:,} lines[/yellow]", "", "", "")
-            table.add_row("[white][+] [magenta]Empty[/magenta][/white]", f"[magenta]{total_data['blank']:,} lines[/magenta]", "", "", "")
-            table.add_row("[white][+] [cyan]Language(s) used[/cyan][/white]", f"[cyan]{language_count} language(s)[/cyan]", "", "", "")
-            table.add_row("[white][+] [blue]Total Project Size[/blue][/white]", f"[blue]{project_size:.2f} MB[/blue]", "", "", "")
+            table.add_row("[bold cyan]Summary Information[/bold cyan]", "", "", "", "", "")
+            table.add_row("[white][+] [green]Code[/green][/white]", "", f"[green]{total_data['code']:,} lines[/green]", "", "", "")
+            table.add_row("[white][+] [yellow]Comments[/yellow][/white]", "", f"[yellow]{total_data['comment']:,} lines[/yellow]", "", "", "")
+            table.add_row("[white][+] [magenta]Empty[/magenta][/white]", "", f"[magenta]{total_data['blank']:,} lines[/magenta]", "", "", "")
+            table.add_row("[white][+] [cyan]Language(s) used[/cyan][/white]", "", f"[cyan]{language_count} language(s)[/cyan]", "", "", "")
+            table.add_row("[white][+] [blue]Total Project Size[/blue][/white]", "", f"[blue]{project_size:.2f} MB[/blue]", "", "", "")
 
         # Print the table
         console.print(table)
